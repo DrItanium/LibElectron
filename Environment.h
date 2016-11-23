@@ -24,6 +24,7 @@
 
 #ifndef __LibNeutron_Environment_h__
 #define __LibNeutron_Environment_h__
+#include <cstdint>
 #include <functional>
 #include <list>
 #include <vector>
@@ -68,7 +69,7 @@ using DataObjectPtr = DATA_OBJECT_PTR;
  * A wrapper over the raw macros in CLIPS
  */
 enum class DataObjectType : int {
-    Float = ELECTRON_FLOAT,
+    Float = FLOAT,
     Integer = INTEGER,
     Symbol = SYMBOL,
     String = STRING,
@@ -106,7 +107,7 @@ public:
      * @param type The CLIPS type (see constant.h)
      * @param value The CLIPS converted value
      */
-    void installArgument(uint16 type, void* value);
+    void installArgument(uint16_t type, void* value);
     void installArgument(DataObjectType type, void* value);
     /**
      * Install the given string as an argument to the given expression
@@ -116,9 +117,9 @@ public:
 
     void addArgument(const std::string& str);
 
-    void addArgument(int64 value);
+    void addArgument(int64_t value);
 
-    void addArgument(int32 value);
+    void addArgument(int32_t value);
 
     void addArgument(bool value);
 
@@ -222,7 +223,7 @@ class MultifieldBuilder
 {
     public:
         explicit MultifieldBuilder(void* rawMultifield) : _rawMultifield(rawMultifield) { }
-        MultifieldBuilder(Environment* env, int32 size);
+        MultifieldBuilder(Environment* env, int32_t size);
         void* getRawMultifield() const { return _rawMultifield; }
         void setField(DataObjectType type, int index, void* value);
     private:
@@ -284,7 +285,7 @@ public:
 
     /// Runs the given CLIPS environment (rule execution)
     /// @return The number of rules fired
-    int64 run(int64 count = -1L);
+    int64_t run(int64_t count = -1L);
 
     /// Loads the given source file into the given clips environment
     void loadFile(const std::string& path);
@@ -362,15 +363,15 @@ public:
 
     /// Registers the given number into the CLIPS symbol table
     /// @return pointer to the registered symbol
-    void* addNumber(int32 number);
+    void* addNumber(int32_t number);
 
     /// Registers the given number into the CLIPS symbol table
     /// @return pointer to the registered symbol
-    void* addNumber(int64 number);
+    void* addNumber(int64_t number);
 
     /// Registers the given number into the CLIPS symbol table
     /// @return pointer to the registered symbol
-    void* addNumber(uint32 number);
+    void* addNumber(uint32_t number);
 
     /// Registers the given number into the CLIPS symbol table
     /// @return pointer to the registered symbol
@@ -418,15 +419,15 @@ public:
     void reclaimExpressionList(EXPRESSION* expr);
 
     /// generate a constant expression from the given value and type
-    EXPRESSION* generateConstantExpression(uint16 type, void* value);
+    EXPRESSION* generateConstantExpression(uint16_t type, void* value);
 
     /// find the function associated with the given name
     bool generateFunctionExpression(const std::string& name, FUNCTION_REFERENCE* ref);
 
-    void invokeFunction(const std::string& function);
-    void invokeFunction(const std::string& function, DataObjectPtr ret);
+    void buildAndExecuteFunction(const std::string& function);
+    void buildAndExecuteFunction(const std::string& function, DataObjectPtr ret);
     template<typename T0>
-    void invokeFunction(const std::string& function, DataObjectPtr ret, T0 arg0)
+    void buildAndExecuteFunction(const std::string& function, DataObjectPtr ret, T0 arg0)
     {
         FunctionBuilder fb(this);
         fb.setFunctionReference(function);
@@ -434,7 +435,7 @@ public:
         fb.invoke(ret);
     }
     template<typename T0, typename T1>
-    void invokeFunction(const std::string& function, DataObjectPtr ret, T0 arg0, T1 arg1)
+    void buildAndExecuteFunction(const std::string& function, DataObjectPtr ret, T0 arg0, T1 arg1)
     {
         FunctionBuilder fb(this);
         fb.setFunctionReference(function);
@@ -448,7 +449,7 @@ public:
     /// @param ret The DataObject pointer to store the result in
     /// @param args The variadic list of arguments useful for execution
     template<typename ... Args>
-    void invokeFunction(const std::string& function, DataObjectPtr ret, Args ... args)
+    void buildAndExecuteFunction(const std::string& function, DataObjectPtr ret, Args ... args)
     {
         FunctionBuilder fb(this);
         fb.setFunctionReference(function);
@@ -461,17 +462,17 @@ public:
     /// @param ret The data object to store the result in
     /// @param args The variadic list of arguments useful for execution
     template<typename R, typename ... Args>
-    void invokeFunction(const std::string& function, R& ret, Args ... args)
+    void buildAndExecuteFunction(const std::string& function, R& ret, Args ... args)
     {
         DataObject r;
-        invokeFunction(function, &r, args...);
+        buildAndExecuteFunction(function, &r, args...);
         extractValue(&r, ret);
     }
     template<typename ... Args>
-    void invokeFunction(const std::string& function, std::function<void(Environment*, DataObjectPtr)> ret, Args ... args)
+    void buildAndExecuteFunction(const std::string& function, std::function<void(Environment*, DataObjectPtr)> ret, Args ... args)
     {
         DataObject r;
-        invokeFunction(function, &r, args...);
+        buildAndExecuteFunction(function, &r, args...);
         ret(this, &r);
     }
     /// Extract data out of the given data object using the provided function
@@ -524,7 +525,7 @@ public:
      * @param size the size of the multifield to construct
      * @return an opaque pointer to the raw multifield itself
      */
-    void* createMultifield(int32 size);
+    void* createMultifield(int32_t size);
 
     template<typename T>
     bool externalAddressIsOfType(DataObjectPtr ptr)
@@ -577,25 +578,25 @@ void extractData(Environment* env, DataObjectPtr dobj, std::list<std::string>& l
 /// @param list A pointer to a std::vector<string> to store the multifield contents in
 void extractData(Environment* env, DataObjectPtr dobj, std::vector<std::string>& list);
 
-/// Extract the int32 value out of a DataObject and place it in a provided field
-/// @param dobj The data object to extract the int32 value from
-/// @param value a reference to an int32 value to be updated
-void extractData(Environment* env, DataObjectPtr dobj, int32& value);
+/// Extract the int32_t value out of a DataObject and place it in a provided field
+/// @param dobj The data object to extract the int32_t value from
+/// @param value a reference to an int32_t value to be updated
+void extractData(Environment* env, DataObjectPtr dobj, int32_t& value);
 
-/// Extract the uint32 value out of a DataObject and place it in a provided field
-/// @param dobj The data object to extract the uint32 value from
-/// @param value a reference to an uint32 value to be updated
-void extractData(Environment* env, DataObjectPtr dobj, uint32& value);
+/// Extract the uint32_t value out of a DataObject and place it in a provided field
+/// @param dobj The data object to extract the uint32_t value from
+/// @param value a reference to an uint32_t value to be updated
+void extractData(Environment* env, DataObjectPtr dobj, uint32_t& value);
 
-/// Extract the uint64 value out of a DataObject and place it in a provided field
-/// @param dobj The data object to extract the uint64 value from
-/// @param value a reference to an uint64 value to be updated
-void extractData(Environment* env, DataObjectPtr dobj, int64& value);
+/// Extract the uint64_t value out of a DataObject and place it in a provided field
+/// @param dobj The data object to extract the uint64_t value from
+/// @param value a reference to an uint64_t value to be updated
+void extractData(Environment* env, DataObjectPtr dobj, int64_t& value);
 
-/// Extract the uint64 value out of a DataObject and place it in a provided field
-/// @param dobj The data object to extract the uint64 value from
-/// @param value a reference to an uint64 value to be updated
-void extractData(Environment* env, DataObjectPtr dobj, uint64& value);
+/// Extract the uint64_t value out of a DataObject and place it in a provided field
+/// @param dobj The data object to extract the uint64_t value from
+/// @param value a reference to an uint64_t value to be updated
+void extractData(Environment* env, DataObjectPtr dobj, uint64_t& value);
 
 /// Extract the double value out of a DataObject and place it in a provided field
 /// @param dobj The data object to extract the double value from

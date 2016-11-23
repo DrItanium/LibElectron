@@ -118,8 +118,8 @@ Environment::reset()
     ::EnvReset(env);
 }
 
-int64
-Environment::run(int64 count)
+int64_t
+Environment::run(int64_t count)
 {
     return ::EnvRun(env, count);
 }
@@ -129,7 +129,7 @@ void
 Environment::loadFile(const std::string& path)
 {
     std::stringstream st;
-    switch (::EnvLoad(env, path.string().c_str())) {
+    switch (::EnvLoad(env, path.c_str())) {
     case -1: // parse error
         st << "Unable to parse file: " << path;
         throw Problem(st.str());
@@ -184,19 +184,19 @@ Environment::addSymbol(const char* symbol)
 }
 
 void*
-Environment::addNumber(int32 number)
+Environment::addNumber(int32_t number)
 {
     return (void*)::EnvAddLong(env, number);
 }
 
 void*
-Environment::addNumber(int64 number)
+Environment::addNumber(int64_t number)
 {
     return (void*)::EnvAddLong(env, number);
 }
 
 void*
-Environment::addNumber(uint32 number)
+Environment::addNumber(uint32_t number)
 {
     return (void*)::EnvAddLong(env, number);
 }
@@ -232,7 +232,10 @@ Environment::setSlot(void* instance, const std::string& slotName, DataObjectPtr 
 {
     if (::EnvDirectPutSlot(env, instance, slotName.c_str(), value) == 0) {
         /// @todo add support for printing out the data object value
-        throw Problem("Attempting to set slot '" << slotName << "' failed!");
+        std::stringstream msg;
+        msg << "Attempting to set slot '" << slotName << "' failed!";
+        auto tmp = msg.str();
+        throw Problem(tmp);
     }
 }
 
@@ -268,7 +271,7 @@ Environment::reclaimExpressionList(EXPRESSION* expr)
 }
 
 EXPRESSION*
-Environment::generateConstantExpression(uint16 type, void* value)
+Environment::generateConstantExpression(uint16_t type, void* value)
 {
     return ::GenConstant(env, type, value);
 }
@@ -344,7 +347,7 @@ Environment::installUserFunction(const std::string& name, UserFunctionReturnType
 }
 
 void*
-Environment::createMultifield(int32 size)
+Environment::createMultifield(int32_t size)
 {
     return ::EnvCreateMultifield(env, size);
 }
@@ -384,7 +387,7 @@ FunctionBuilder::setFunctionReference(const std::string& func)
 }
 
 void
-FunctionBuilder::installArgument(uint16 type, void* value)
+FunctionBuilder::installArgument(uint16_t type, void* value)
 {
     if (functionReferenceSet) {
         auto tmp = env->generateConstantExpression(type, value);
@@ -404,7 +407,7 @@ FunctionBuilder::installArgument(uint16 type, void* value)
 void
 FunctionBuilder::installArgument(DataObjectType type, void* value)
 {
-    installArgument(static_cast<uint16>(type), value);
+    installArgument(static_cast<uint16_t>(type), value);
 }
 
 void
@@ -414,7 +417,7 @@ FunctionBuilder::addArgument(bool value)
 }
 
 void
-FunctionBuilder::addArgument(int64 value)
+FunctionBuilder::addArgument(int64_t value)
 {
     installArgument(INTEGER, env->addNumber(value));
 }
@@ -503,7 +506,7 @@ FunctionBuilder::invoke(DataObjectPtr ret)
 }
 
 void
-FunctionBuilder::addArgument(int32 value)
+FunctionBuilder::addArgument(int32_t value)
 {
     installArgument(INTEGER, env->addNumber(value));
 }
@@ -560,25 +563,25 @@ extractData(Environment* env, DataObjectPtr dobj, std::stringstream& value)
 }
 
 void
-extractData(Environment* env, DataObjectPtr dobj, int32& value)
+extractData(Environment* env, DataObjectPtr dobj, int32_t& value)
 {
     value = EnvDOPToInteger(env->getRawEnvironment(), dobj);
 }
 void
-extractData(Environment* env, DataObjectPtr dobj, uint32& value)
+extractData(Environment* env, DataObjectPtr dobj, uint32_t& value)
 {
     value = EnvDOPToInteger(env->getRawEnvironment(), dobj);
 }
 
 void
-extractData(Environment* env, DataObjectPtr dobj, uint64& value)
+extractData(Environment* env, DataObjectPtr dobj, uint64_t& value)
 {
     //The EnvDOPToLong macro returns an integer of types long long (according
     //to the integer hash node struct).
-    value = (uint64)EnvDOPToLong(env->getRawEnvironment(), dobj);
+    value = (uint64_t)EnvDOPToLong(env->getRawEnvironment(), dobj);
 }
 void
-extractData(Environment* env, DataObjectPtr dobj, int64& value)
+extractData(Environment* env, DataObjectPtr dobj, int64_t& value)
 {
     value = EnvDOPToLong(env->getRawEnvironment(), dobj);
 }
@@ -605,11 +608,11 @@ extractData(Environment* env, DataObjectPtr dobj, bool& value) {
 
 // begin MultifieldBuilder stuff
 
-MultifieldBuilder::MultifieldBuilder(Environment* env, int32 size) : MultifieldBuilder(env->createMultifield(size)) { }
+MultifieldBuilder::MultifieldBuilder(Environment* env, int32_t size) : MultifieldBuilder(env->createMultifield(size)) { }
 
 void
 MultifieldBuilder::setField(DataObjectType type, int index, void* value) {
-    SetMFType(_rawMultifield, index, static_cast<int16>(type));
+    SetMFType(_rawMultifield, index, static_cast<int16_t>(type));
     SetMFValue(_rawMultifield, index, value);
 }
 
